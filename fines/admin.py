@@ -1,5 +1,33 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db import transaction
+
 from .models import Fine, FinePayment
+
+
+@admin.action(description='Mark selected fines as fully paid')
+def mark_fines_paid(modeladmin, request, queryset):
+    paid = already_paid = 0
+
+    with transaction.atomic():
+        for fine in queryset.select_for_update():
+            outstanding = fine.outstanding_amount
+
+            if outstanding <= 0:
+                already_paid += 1
+                continue
+
+            FinePayment.objects.create(
+                fine=fine,
+                amount=outstanding,
+                received_by=request.user,
+            )
+            paid += 1
+
+    modeladmin.message_user(
+        request,
+        f'{paid} fine(s) marked as paid, {already_paid} were already paid.',
+        messages.SUCCESS,
+    )
 
 
 @admin.register(Fine)
@@ -35,6 +63,8 @@ class FineAdmin(admin.ModelAdmin):
     )
 
     list_select_related = ('borrow_record', 'borrow_record__user', 'borrow_record__book')
+
+    actions = [mark_fines_paid]
 
     def has_add_permission(self, request):
         return False

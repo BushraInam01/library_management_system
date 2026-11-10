@@ -42,6 +42,24 @@ A web-based Library Management System built with **Python and Django**. This app
 - Django Admin integration
 - CSV import support with `django-import-export`
 - Administrative management of library records
+- Custom admin actions:
+  - Send overdue reminder emails (Borrow records)
+  - Mark selected fines as fully paid (Fines)
+  - Activate / deactivate library cards (Library cards)
+- Members created in the admin automatically receive a library card
+- Due-date email sent automatically when a book is borrowed (Django signal)
+
+#### CSV import format
+
+In Django Admin > Books > Import, upload a CSV with these columns:
+
+```
+isbn,title,author,publisher,publication_year,description,total_copies
+```
+
+Books are matched by ISBN: existing books are updated, new ones are created.
+`available_copies` is managed automatically. Leave out a column (for example
+`description`) if you do not want to change it, because blank cells overwrite existing values.
 
 ## 🛠️ Technology Stack
 
