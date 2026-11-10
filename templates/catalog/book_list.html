@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Catalog{% endblock %}
+
+{% block content %}
+
+<div class="auth-card">
+
+    <h1>Book Catalog</h1>
+
+    <p class="subtitle">
+        Explore books available in our library.
+    </p>
+
+    <form method="GET">
+        <div class="form-group">
+            <label for="search">Search Books</label>
+
+            <input
+                type="text"
+                id="search"
+                name="q"
+                value="{{ search_query }}"
+                placeholder="Search by title, author or ISBN"
+                class="form-control"
+            >
+        </div>
+
+        <button type="submit" class="button">
+            Search
+        </button>
+
+        {% if search_query %}
+            <a href="{% url 'catalog:book_list' %}">
+                Clear Search
+            </a>
+        {% endif %}
+    </form>
+
+    <hr>
+
+    <h2>Available Books</h2>
+
+    {% for book in books %}
+
+        <div class="book-item">
+
+            <h3>
+                <a href="{% url 'catalog:book_detail' book.pk %}">
+                    {{ book.title }}
+                </a>
+            </h3>
+
+            <p>
+                <strong>Author:</strong> {{ book.author }}
+            </p>
+
+            <p>
+                <strong>ISBN:</strong> {{ book.isbn }}
+            </p>
+
+            <p>
+                <strong>Available Copies:</strong>
+                {{ book.available_copies }}
+            </p>
+
+            <p>
+                <strong>Total Copies:</strong>
+                {{ book.total_copies }}
+            </p>
+
+        </div>
+
+        <hr>
+
+    {% empty %}
+
+        <p>No books found in the catalog.</p>
+
+    {% endfor %}
+
+    {% if is_paginated %}
+
+        <div class="pagination">
+
+            {% if page_obj.has_previous %}
+                <a href="?q={{ search_query|urlencode }}&page=1">
+                    First
+                </a>
+
+                <a href="?q={{ search_query|urlencode }}&page={{ page_obj.previous_page_number }}">
+                    Previous
+                </a>
+            {% endif %}
+
+            <span>
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?q={{ search_query|urlencode }}&page={{ page_obj.next_page_number }}">
+                    Next
+                </a>
+
+                <a href="?q={{ search_query|urlencode }}&page={{ page_obj.paginator.num_pages }}">
+                    Last
+                </a>
+            {% endif %}
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

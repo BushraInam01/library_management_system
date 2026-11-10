@@ -1,0 +1,68 @@
+
+{% extends 'base.html' %}
+
+{% block title %}My Reservations{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h1>My Reservations</h1>
+    <p class="subtitle">View and manage your book reservations.</p>
+
+    <hr>
+
+    {% if reservations %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Book</th>
+                        <th>Reserved At</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for reservation in reservations %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'catalog:book_detail' reservation.book.pk %}">
+                                    {{ reservation.book.title }}
+                                </a>
+                            </td>
+
+                            <td>{{ reservation.reserved_at|date:"d M Y, h:i A" }}</td>
+
+                            <td>
+                                {{ reservation.get_status_display }}
+                            </td>
+
+                            <td>
+                                {% if reservation.status == 'WAITING' or reservation.status == 'READY' %}
+                                    <form method="POST"
+                                          action="{% url 'reservations:cancel' reservation.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="button">
+                                            Cancel Reservation
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>You have not made any reservations yet.</p>
+    {% endif %}
+
+    <hr>
+
+    <a href="{% url 'catalog:book_list' %}" class="button">
+        Browse Books
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Manage Reservations{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h1>Manage Reservations</h1>
+    <p class="subtitle">View the reservation queue for all books.</p>
+
+    <hr>
+
+    {% if reservations %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Book</th>
+                        <th>Reserved At</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for reservation in reservations %}
+                        <tr>
+                            <td>{{ reservation.user.username }}</td>
+
+                            <td>{{ reservation.book.title }}</td>
+
+                            <td>
+                                {{ reservation.reserved_at|date:"d M Y, h:i A" }}
+                            </td>
+
+                            <td>{{ reservation.get_status_display }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No reservations have been made yet.</p>
+    {% endif %}
+
+    <hr>
+
+    <a href="{% url 'catalog:book_list' %}" class="button">
+        Back to Catalog
+    </a>
+</div>
+{% endblock %}

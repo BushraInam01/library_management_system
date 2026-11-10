@@ -1,0 +1,12 @@
+asgiref==3.13.0
+certifi==2026.10.23
+charset-normalizer==3.5.2
+diff-match-patch==20241021
+Django==6.1.2
+django-import-export==4.4.4
+idna==3.20
+python-dotenv==1.2.4
+requests==2.34.2
+sqlparse==0.6.1
+tablib==3.10.0
+urllib3==2.8.0

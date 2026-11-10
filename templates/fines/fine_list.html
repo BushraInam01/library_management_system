@@ -1,0 +1,143 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Manage Fines | Library Management{% endblock %}
+
+{% block content %}
+
+<div class="fine-dashboard">
+
+    <div class="fine-page-header">
+        <div>
+            <h1>Manage Fines</h1>
+            <p>Track overdue fines and manage member payments.</p>
+        </div>
+
+        <div class="fine-total-count">
+            <span>Total Fine Records</span>
+            <strong>{{ fines|length }}</strong>
+        </div>
+    </div>
+
+    <div class="fine-table-card">
+
+        <div class="fine-card-header">
+            <div>
+                <h2>Fine Records</h2>
+                <p>View outstanding balances and payment history.</p>
+            </div>
+        </div>
+
+        {% if fines %}
+
+        <div class="fine-table-wrapper">
+
+            <table class="fine-table">
+
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Book</th>
+                        <th>Overdue</th>
+                        <th>Total Fine</th>
+                        <th>Paid</th>
+                        <th>Outstanding</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for fine in fines %}
+
+                    <tr>
+                        <td>
+                            <div class="fine-member">
+                                <strong>{{ fine.borrow_record.user.username }}</strong>
+                                <span>Member</span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="fine-book-title">
+                                {{ fine.borrow_record.book.title }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="overdue-days">
+                                {{ fine.overdue_days }} days
+                            </span>
+                        </td>
+
+                        <td>
+                            Rs. {{ fine.total_amount|floatformat:2 }}
+                        </td>
+
+                        <td class="paid-amount">
+                            Rs. {{ fine.amount_paid|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            <strong class="outstanding-amount">
+                                Rs. {{ fine.outstanding_amount|floatformat:2 }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {% if fine.payment_status == 'PAID' %}
+                                <span class="fine-status paid">
+                                    Paid
+                                </span>
+
+                            {% elif fine.payment_status == 'PARTIALLY PAID' %}
+                                <span class="fine-status partial">
+                                    Partially Paid
+                                </span>
+
+                            {% else %}
+                                <span class="fine-status unpaid">
+                                    Unpaid
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if fine.outstanding_amount > 0 %}
+                                <a
+                                    href="{% url 'fines:record_payment' fine.pk %}"
+                                    class="fine-action-btn"
+                                >
+                                    Receive Payment
+                                </a>
+                            {% else %}
+                                <span class="payment-complete">
+                                    Completed
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="fine-empty-state">
+            <h3>No Fine Records Found</h3>
+            <p>There are currently no overdue fines recorded in the system.</p>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

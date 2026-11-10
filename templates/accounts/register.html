@@ -1,0 +1,59 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Member Registration{% endblock %}
+
+{% block content %}
+
+<div class="auth-card">
+
+    <h1>Create Library Account</h1>
+    <p class="subtitle">Register as a library member.</p>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {% for field in form %}
+
+            <div class="form-group">
+
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                </label>
+
+                {{ field }}
+
+                {% if field.help_text %}
+                    <small class="help-text">
+                        {{ field.help_text|safe }}
+                    </small>
+                {% endif %}
+
+                {% for error in field.errors %}
+                    <p class="field-error">{{ error }}</p>
+                {% endfor %}
+
+            </div>
+
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+            <div class="field-error">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <button type="submit" class="primary-button">
+            Create Account
+        </button>
+
+    </form>
+
+    <p class="auth-link">
+        Already have an account?
+        <a href="{% url 'accounts:login' %}">Login here</a>
+    </p>
+
+</div>
+
+{% endblock %}

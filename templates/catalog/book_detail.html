@@ -1,0 +1,112 @@
+
+{% extends 'base.html' %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+
+<div class="auth-card">
+
+    <h1>{{ book.title }}</h1>
+    <p class="subtitle">Complete Book Information</p>
+
+    <hr>
+
+    <p><strong>Title:</strong> {{ book.title }}</p>
+    <p><strong>Author:</strong> {{ book.author }}</p>
+    <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+    <p><strong>Publisher:</strong> {{ book.publisher|default:"Not available" }}</p>
+    <p><strong>Publication Year:</strong> {{ book.publication_year|default:"Not available" }}</p>
+    <p><strong>Description:</strong> {{ book.description|default:"No description available." }}</p>
+
+    <hr>
+
+    <h3>Copies Information</h3>
+
+    <p><strong>Total Copies:</strong> {{ book.total_copies }}</p>
+    <p><strong>Available Copies:</strong> {{ book.available_copies }}</p>
+
+    {% if book.available_copies > 0 %}
+        <p>This book is currently available.</p>
+    {% else %}
+        <p>This book is currently not available.</p>
+    {% endif %}
+
+    <hr>
+
+    <h3>Borrow or Reserve This Book</h3>
+
+    {% if user.is_authenticated %}
+
+        {% if user.role == 'MEMBER' %}
+
+            {% if active_borrowing %}
+
+                <p>You have already borrowed this book.</p>
+
+            {% elif ready_reservation %}
+
+                <p>Your reservation is READY. You can now borrow this book.</p>
+
+                <form method="POST"
+                      action="{% url 'borrowing:borrow_book' book.pk %}">
+                    {% csrf_token %}
+
+                    <button type="submit" class="button">
+                        Borrow Book
+                    </button>
+                </form>
+
+            {% elif book.available_copies > 0 %}
+
+                <form method="POST"
+                      action="{% url 'borrowing:borrow_book' book.pk %}">
+                    {% csrf_token %}
+
+                    <button type="submit" class="button">
+                        Borrow Book
+                    </button>
+                </form>
+
+            {% else %}
+
+                <p>Sorry, this book is currently unavailable.</p>
+
+                <form method="POST"
+                      action="{% url 'reservations:create' book.pk %}">
+                    {% csrf_token %}
+
+                    <button type="submit" class="button">
+                        Reserve Book
+                    </button>
+                </form>
+
+            {% endif %}
+
+        {% else %}
+
+            <p>Only library members can borrow or reserve books.</p>
+
+        {% endif %}
+
+    {% else %}
+
+        <p>
+            Please
+            <a href="{% url 'accounts:login' %}?next={{ request.path }}">
+                log in
+            </a>
+            as a member to borrow or reserve this book.
+        </p>
+
+    {% endif %}
+
+    <hr>
+
+    <a href="{% url 'catalog:book_list' %}" class="button">
+        Back to Catalog
+    </a>
+
+</div>
+
+{% endblock %}

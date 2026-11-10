@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Record Fine Payment{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Record Fine Payment</h1>
+
+    <div class="card">
+        <h2>Fine Details</h2>
+
+        <p>
+            <strong>Member:</strong>
+            {{ fine.borrow_record.user.username }}
+        </p>
+
+        <p>
+            <strong>Book:</strong>
+            {{ fine.borrow_record.book.title }}
+        </p>
+
+        <p>
+            <strong>Overdue Days:</strong>
+            {{ fine.overdue_days }}
+        </p>
+
+        <p>
+            <strong>Total Fine:</strong>
+            Rs. {{ fine.total_amount }}
+        </p>
+
+        <p>
+            <strong>Already Paid:</strong>
+            Rs. {{ fine.amount_paid }}
+        </p>
+
+        <p>
+            <strong>Outstanding Amount:</strong>
+            Rs. {{ fine.outstanding_amount }}
+        </p>
+
+        <p>
+            <strong>Payment Status:</strong>
+            {{ fine.payment_status }}
+        </p>
+    </div>
+
+    {% if fine.outstanding_amount > 0 %}
+    <div class="card">
+        <h2>Receive Payment</h2>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            {{ form.non_field_errors }}
+
+            <div class="form-group">
+                {{ form.amount.label_tag }}
+                {{ form.amount }}
+                {{ form.amount.errors }}
+            </div>
+
+            <button type="submit" class="btn">
+                Submit Payment
+            </button>
+        </form>
+    </div>
+    {% else %}
+        <p>This fine has already been fully paid.</p>
+    {% endif %}
+
+    <p>
+        <a href="{% url 'fines:fine_list' %}">
+            Back to Fine List
+        </a>
+    </p>
+</div>
+{% endblock %}

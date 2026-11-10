@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Borrowed Books{% endblock %}
+
+{% block content %}
+
+<h1>Manage Borrowed Books</h1>
+
+<p>
+    View active borrowing records and process book returns.
+</p>
+
+{% if borrow_records %}
+
+    {% for record in borrow_records %}
+
+        <div class="book-card">
+
+            <h2>{{ record.book.title }}</h2>
+
+            <p>
+                <strong>Author:</strong>
+                {{ record.book.author }}
+            </p>
+
+            <p>
+                <strong>Borrowed By:</strong>
+                {{ record.user.username }}
+            </p>
+
+            <p>
+                <strong>ISBN:</strong>
+                {{ record.book.isbn }}
+            </p>
+
+            <p>
+                <strong>Borrowed On:</strong>
+                {{ record.borrowed_at|date:"d M Y" }}
+            </p>
+
+            <p>
+                <strong>Due Date:</strong>
+                {{ record.due_date|date:"d M Y" }}
+            </p>
+
+            {% if record.is_overdue %}
+
+                <p class="status-overdue">
+                    Status: Overdue
+                </p>
+
+            {% else %}
+
+                <p class="status-borrowed">
+                    Status: Currently Borrowed
+                </p>
+
+            {% endif %}
+
+            <form method="POST"
+                  action="{% url 'borrowing:return_book' record.pk %}">
+
+                {% csrf_token %}
+
+                <button type="submit" class="button">
+                    Mark as Returned
+                </button>
+
+            </form>
+
+        </div>
+
+        <hr>
+
+    {% endfor %}
+
+{% else %}
+
+    <p>There are currently no active borrowing records.</p>
+
+{% endif %}
+
+<a href="{% url 'accounts:librarian_dashboard' %}">
+    Back to Librarian Dashboard
+</a>
+
+{% endblock %}

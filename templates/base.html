@@ -1,0 +1,115 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Library Management System{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container navbar-content">
+
+            <a href="/" class="brand">
+                Library Management System
+            </a>
+
+            <nav>
+
+                {% if user.is_authenticated %}
+
+                    <span class="welcome-text">
+                        Welcome, {{ user.first_name|default:user.username }}
+                    </span>
+
+                    {% if user.role == 'MEMBER' and not user.is_superuser %}
+
+                        <a href="{% url 'borrowing:my_borrowed_books' %}">
+                            My Borrowed Books
+                        </a>
+
+                        <a href="{% url 'reservations:my_reservations' %}">
+                            My Reservations
+                        </a>
+
+                    {% endif %}
+
+                    {% if user.role == 'LIBRARIAN' or user.is_superuser %}
+
+                        <a href="{% url 'borrowing:librarian_borrowed_books' %}">
+                            Manage Borrowed Books
+                        </a>
+
+                        <a href="{% url 'reservations:manage' %}">
+                            Manage Reservations
+                        </a>
+
+                        <a href="{% url 'fines:fine_list' %}">
+                            Manage Fines
+                        </a>
+
+                    {% endif %}
+
+                    <form method="POST"
+                          action="{% url 'accounts:logout' %}"
+                          class="inline-form">
+
+                        {% csrf_token %}
+
+                        <button type="submit" class="nav-button">
+                            Logout
+                        </button>
+
+                    </form>
+
+                {% else %}
+
+                    <a href="{% url 'accounts:login' %}">
+                        Login
+                    </a>
+
+                    <a href="{% url 'accounts:register' %}">
+                        Register
+                    </a>
+
+                    <a href="{% url 'catalog:book_list' %}">
+                        Book Catalog
+                    </a>
+
+                {% endif %}
+
+            </nav>
+
+        </div>
+    </header>
+
+    <main class="container main-content">
+
+        {% if messages %}
+
+            {% for message in messages %}
+
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+    <footer>
+        <p>Library Catalog & Borrowing System</p>
+    </footer>
+
+</body>
+</html>

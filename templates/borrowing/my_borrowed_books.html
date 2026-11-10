@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>My Borrowed Books</h1>
+
+<p>Here you can view your borrowing history and due dates.</p>
+
+{% if borrow_records %}
+
+    <div class="book-list">
+
+        {% for record in borrow_records %}
+
+            <div class="book-card">
+
+                <h2>
+                    {{ record.book.title }}
+                </h2>
+
+                <p>
+                    <strong>Author:</strong>
+                    {{ record.book.author }}
+                </p>
+
+                <p>
+                    <strong>ISBN:</strong>
+                    {{ record.book.isbn }}
+                </p>
+
+                <p>
+                    <strong>Borrowed On:</strong>
+                    {{ record.borrowed_at|date:"d M Y" }}
+                </p>
+
+                <p>
+                    <strong>Due Date:</strong>
+                    {{ record.due_date|date:"d M Y" }}
+                </p>
+
+                {% if record.returned_at %}
+
+                    <p>
+                        <strong>Status:</strong>
+                        <span class="status-returned">
+                            Returned
+                        </span>
+                    </p>
+
+                    <p>
+                        <strong>Returned On:</strong>
+                        {{ record.returned_at|date:"d M Y" }}
+                    </p>
+
+                {% elif record.is_overdue %}
+
+                    <p>
+                        <strong>Status:</strong>
+                        <span class="status-overdue">
+                            Overdue
+                        </span>
+                    </p>
+
+                {% else %}
+
+                    <p>
+                        <strong>Status:</strong>
+                        <span class="status-borrowed">
+                            Currently Borrowed
+                        </span>
+                    </p>
+
+                {% endif %}
+
+                <p>
+                    <a href="{% url 'catalog:book_detail' record.book.pk %}">
+                        View Book Details
+                    </a>
+                </p>
+
+            </div>
+
+            <hr>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <p>You have not borrowed any books yet.</p>
+
+{% endif %}
+
+<a href="{% url 'catalog:book_list' %}" class="button">
+    Back to Book Catalog
+</a>
+
+{% endblock %}

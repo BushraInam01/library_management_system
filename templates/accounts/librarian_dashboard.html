@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Librarian Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="auth-card">
+    <h1>Librarian Dashboard</h1>
+
+    <p class="subtitle">
+        Welcome to the Library Staff Portal.
+    </p>
+
+    <div class="form-group">
+        <strong>Username:</strong> {{ user.username }}
+    </div>
+
+    <div class="form-group">
+        <strong>Name:</strong>
+        {{ user.get_full_name|default:"Not provided" }}
+    </div>
+
+    <div class="form-group">
+        <strong>Email:</strong>
+        {{ user.email|default:"Not provided" }}
+    </div>
+
+    <div class="form-group">
+        <strong>Role:</strong> {{ user.get_role_display }}
+    </div>
+
+    <hr>
+
+    <h3>Library Management</h3>
+
+    <p>Book Catalog Management will be available here.</p>
+    <p>Borrowing and Return Management will be available here.</p>
+    <p>Reservation Management will be available here.</p>
+
+</div>
+
+{% endblock %}

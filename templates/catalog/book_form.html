@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Book{% endblock %}
+
+{% block content %}
+
+<div class="auth-card">
+
+    <h1>Add Book to Catalog</h1>
+
+    <p class="subtitle">
+        Review the book details and save the book.
+    </p>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {% for field in form %}
+
+            <div class="form-group">
+
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                </label>
+
+                {{ field }}
+
+                {% for error in field.errors %}
+                    <p class="error-message">{{ error }}</p>
+                {% endfor %}
+
+            </div>
+
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+            <div class="error-message">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <button type="submit" class="button">
+            Save Book
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}
