@@ -2,8 +2,6 @@ from decimal import Decimal
 
 from django import forms
 
-from .models import Fine
-
 
 class FinePaymentForm(forms.Form):
     amount = forms.DecimalField(

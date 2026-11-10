@@ -1,23 +1,13 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
 from django.views.generic.edit import FormView
 
-from accounts.models import User
+from accounts.mixins import LibrarianRequiredMixin
 
 from .forms import FinePaymentForm
 from .models import Fine, FinePayment
 from django.views.generic import ListView
-
-
-class LibrarianRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    login_url = 'accounts:login'
-
-    def test_func(self):
-        user = self.request.user
-        return user.is_superuser or user.role == User.Role.LIBRARIAN
 
 
 class FinePaymentView(LibrarianRequiredMixin, FormView):

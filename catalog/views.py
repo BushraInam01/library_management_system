@@ -2,7 +2,6 @@ import re
 import requests
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.cache import cache
 from django.urls import reverse_lazy
 from django.views.generic import FormView, CreateView
@@ -11,28 +10,14 @@ from django.views.generic import ListView, DetailView
 from reservations.models import Reservation
 from borrowing.models import BorrowRecord
 
+from accounts.mixins import LibrarianRequiredMixin
 from accounts.models import User
 
 from .forms import ISBNLookupForm, BookForm
 from .models import Book
 
 
-class LibrarianAccessMixin(
-    LoginRequiredMixin,
-    UserPassesTestMixin
-):
-    login_url = 'accounts:login'
-
-    def test_func(self):
-        user = self.request.user
-
-        return (
-            user.is_superuser
-            or user.role == User.Role.LIBRARIAN
-        )
-
-
-class ISBNLookupView(LibrarianAccessMixin, FormView):
+class ISBNLookupView(LibrarianRequiredMixin, FormView):
     template_name = 'catalog/isbn_lookup.html'
     form_class = ISBNLookupForm
 
@@ -112,11 +97,28 @@ class ISBNLookupView(LibrarianAccessMixin, FormView):
                     'description': description,
                 }
 
-                cache.set(
-                    cache_key,
-                    book_data,
-                    timeout=60 * 60 * 24
-                )
+                if book_data['title']:
+                    cache.set(
+                        cache_key,
+                        book_data,
+                        timeout=60 * 60 * 24
+                    )
+
+            except requests.HTTPError as error:
+                if (
+                    error.response is not None
+                    and error.response.status_code == 404
+                ):
+                    form.add_error(
+                        None,
+                        'No book information was found for this ISBN.'
+                    )
+                else:
+                    form.add_error(
+                        None,
+                        'Open Library returned an error. Please try again.'
+                    )
+                return self.form_invalid(form)
 
             except requests.RequestException:
                 form.add_error(
@@ -147,7 +149,7 @@ class ISBNLookupView(LibrarianAccessMixin, FormView):
         )
 
 
-class BookCreateView(LibrarianAccessMixin, CreateView):
+class BookCreateView(LibrarianRequiredMixin, CreateView):
     model = Book
     form_class = BookForm
     template_name = 'catalog/book_form.html'

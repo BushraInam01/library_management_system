@@ -2,6 +2,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from accounts.models import LibraryCard
 from catalog.models import Book
@@ -250,3 +251,47 @@ class ReservationBorrowingIntegrationTests(TestCase):
         # No waiting reservation exists, so the copy remains available.
         self.assertEqual(self.book.available_copies, 1)
 
+
+
+class DueDateEmailSignalTests(TestCase):
+
+    def setUp(self):
+        self.member = User.objects.create_user(
+            username='emailer', password='pass12345!',
+            email='emailer@example.com',
+        )
+        self.book = Book.objects.create(
+            title='Signal Book', author='A', isbn='9780306406157',
+            total_copies=1, available_copies=1,
+        )
+
+    def test_email_sent_when_borrow_record_created(self):
+        from django.core import mail
+
+        with self.captureOnCommitCallbacks(execute=True):
+            record = BorrowRecord.objects.create(user=self.member, book=self.book)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['emailer@example.com'])
+        self.assertIn(str(record.due_date), mail.outbox[0].subject)
+
+    def test_no_email_when_record_is_updated(self):
+        from django.core import mail
+
+        with self.captureOnCommitCallbacks(execute=True):
+            record = BorrowRecord.objects.create(user=self.member, book=self.book)
+        with self.captureOnCommitCallbacks(execute=True):
+            record.returned_at = timezone.now()
+            record.save()
+
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_no_email_when_member_has_no_address(self):
+        from django.core import mail
+
+        self.member.email = ''
+        self.member.save()
+        with self.captureOnCommitCallbacks(execute=True):
+            BorrowRecord.objects.create(user=self.member, book=self.book)
+
+        self.assertEqual(len(mail.outbox), 0)

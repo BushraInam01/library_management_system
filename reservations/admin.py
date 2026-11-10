@@ -24,7 +24,7 @@ class ReservationAdmin(admin.ModelAdmin):
     search_fields = (
         'user__username',
         'book__title',
-        'book__ISBN',
+        'book__isbn',
     )
 
     readonly_fields = (

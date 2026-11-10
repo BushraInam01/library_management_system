@@ -1,9 +1,14 @@
 from django.contrib import admin
+from import_export.admin import ImportExportModelAdmin
+
 from .models import Book
+from .resources import BookResource
 
 
 @admin.register(Book)
-class BookAdmin(admin.ModelAdmin):
+class BookAdmin(ImportExportModelAdmin):
+
+    resource_classes = [BookResource]
 
     list_display = (
         'title',

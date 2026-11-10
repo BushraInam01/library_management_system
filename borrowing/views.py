@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView
 
+from accounts.mixins import LibrarianRequiredMixin
 from accounts.models import LibraryCard, User
 from catalog.models import Book
 from fines.services import create_fine_for_return
@@ -16,18 +17,6 @@ from reservations.models import Reservation
 from reservations.services import prepare_next_reservation
 
 from .models import BorrowRecord
-
-
-class LibrarianAccessMixin(LoginRequiredMixin, UserPassesTestMixin):
-    login_url = 'accounts:login'
-
-    def test_func(self):
-        user = self.request.user
-
-        return (
-            user.is_superuser
-            or user.role == User.Role.LIBRARIAN
-        )
 
 
 class BorrowBookView(LoginRequiredMixin, View):
@@ -165,7 +154,7 @@ class MyBorrowedBooksView(
 
 
 class LibrarianBorrowedBooksView(
-    LibrarianAccessMixin,
+    LibrarianRequiredMixin,
     ListView
 ):
     model = BorrowRecord
@@ -181,7 +170,7 @@ class LibrarianBorrowedBooksView(
         )
 
 
-class ReturnBookView(LibrarianAccessMixin, View):
+class ReturnBookView(LibrarianRequiredMixin, View):
 
     def post(self, request, pk, *args, **kwargs):
 

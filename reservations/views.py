@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import ListView
 
+from accounts.mixins import LibrarianRequiredMixin
 from accounts.models import LibraryCard, User
 from catalog.models import Book
 
@@ -18,14 +19,6 @@ class MemberAccessMixin(LoginRequiredMixin, UserPassesTestMixin):
 
     def test_func(self):
         return self.request.user.role == User.Role.MEMBER
-
-
-class LibrarianAccessMixin(LoginRequiredMixin, UserPassesTestMixin):
-    login_url = 'accounts:login'
-
-    def test_func(self):
-        user = self.request.user
-        return user.is_superuser or user.role == User.Role.LIBRARIAN
 
 
 class CreateReservationView(LoginRequiredMixin, View):
@@ -114,7 +107,7 @@ class CancelReservationView(MemberAccessMixin, View):
         return redirect('reservations:my_reservations')
 
 
-class LibrarianReservationsView(LibrarianAccessMixin, ListView):
+class LibrarianReservationsView(LibrarianRequiredMixin, ListView):
     model = Reservation
     template_name = 'reservations/manage_reservations.html'
     context_object_name = 'reservations'
