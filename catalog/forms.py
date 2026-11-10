@@ -40,7 +40,6 @@ class BookForm(forms.ModelForm):
             'publication_year',
             'description',
             'total_copies',
-            'available_copies',
         ]
 
         widgets = {
@@ -67,8 +66,17 @@ class BookForm(forms.ModelForm):
                 'class': 'form-control',
                 'min': 1,
             }),
-            'available_copies': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': 0,
-            }),
         }
+
+    def save(self, commit=True):
+        book = super().save(commit=False)
+
+        # A new book starts with every copy available. After that the
+        # borrow/return workflow manages available_copies.
+        if book.pk is None:
+            book.available_copies = book.total_copies
+
+        if commit:
+            book.save()
+
+        return book

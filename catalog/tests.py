@@ -299,17 +299,14 @@ class BookCreateViewTests(CatalogTestDataMixin, TestCase):
                 'publication_year': 2026,
                 'description': 'A new test book.',
                 'total_copies': 3,
-                'available_copies': 3,
             }
         )
 
         self.assertEqual(response.status_code, 302)
 
-        self.assertTrue(
-            Book.objects.filter(
-                isbn='9781234567892'
-            ).exists()
-        )
+        book = Book.objects.get(isbn='9781234567892')
+        self.assertEqual(book.total_copies, 3)
+        self.assertEqual(book.available_copies, 3)
 
 
 class CatalogFormTests(TestCase):
@@ -325,20 +322,23 @@ class CatalogFormTests(TestCase):
             '9781234567890'
         )
 
-    def test_book_form_rejects_available_copies_above_total(self):
+    def test_book_form_has_no_available_copies_field(self):
+        self.assertNotIn('available_copies', BookForm().fields)
+
+    def test_new_book_starts_with_all_copies_available(self):
         form = BookForm(
             data={
-                'title': 'Invalid Book',
+                'title': 'Five Copies',
                 'author': 'Test Author',
                 'isbn': '9781234567893',
                 'publisher': 'Test Publisher',
                 'publication_year': 2025,
-                'description': 'Invalid copy count.',
-                'total_copies': 2,
-                'available_copies': 5,
+                'description': 'Copy count check.',
+                'total_copies': 5,
             }
         )
 
-        self.assertFalse(form.is_valid())
-        self.assertIn('available_copies', form.errors)
+        self.assertTrue(form.is_valid(), form.errors)
+        book = form.save()
+        self.assertEqual(book.available_copies, 5)
 
