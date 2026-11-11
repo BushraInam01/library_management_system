@@ -67,7 +67,7 @@ class ReservationBorrowingIntegrationTests(TestCase):
     def make_reservation_ready(self, member):
 
         # Create WAITING reservation while no copies are available.
-        reservation = create_reservation(
+        create_reservation(
             user=member,
             book=self.book,
         )

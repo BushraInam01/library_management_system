@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
+from borrowing.models import BorrowRecord
 
 from .models import Book
 from .resources import BookResource
@@ -32,15 +33,51 @@ class BookCsvImportTests(TestCase):
         self.assertEqual((book.total_copies, book.available_copies), (4, 4))
 
     def test_reimport_updates_by_isbn_and_shifts_available(self):
-        Book.objects.create(title='Old', author='A', isbn='9780306406157',
-                            total_copies=3, available_copies=1)
+        book = Book.objects.create(
+            title='Old',
+            author='A',
+            isbn='9780306406157',
+            total_copies=3,
+            available_copies=1,
+        )
 
-        BookResource().import_data(dataset(
-            ['9780306406157', 'New Title', 'A', '', '', '', '5'],
-        ), raise_errors=True)
+        # Create two actual active borrow records.
+        user1 = User.objects.create_user(
+            username='member_one',
+            password='pass12345!',
+        )
+
+        user2 = User.objects.create_user(
+            username='member_two',
+            password='pass12345!',
+        )
+
+        BorrowRecord.objects.create(
+            user=user1,
+            book=book,
+        )
+
+        BorrowRecord.objects.create(
+            user=user2,
+            book=book,
+        )
+
+        BookResource().import_data(
+            dataset([
+                '9780306406157',
+                'New Title',
+                'A',
+                '',
+                '',
+                '',
+                '5',
+            ]),
+            raise_errors=True,
+        )
+
+        book.refresh_from_db()
 
         self.assertEqual(Book.objects.count(), 1)
-        book = Book.objects.get()
         self.assertEqual(book.title, 'New Title')
         self.assertEqual(book.total_copies, 5)
         self.assertEqual(book.available_copies, 3)

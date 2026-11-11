@@ -1,18 +1,39 @@
 
 {% extends 'base.html' %}
 
-{% block title %}Manage Reservations{% endblock %}
+{% block title %}Manage Reservations | Library Management{% endblock %}
 
 {% block content %}
-<div class="auth-card">
-    <h1>Manage Reservations</h1>
-    <p class="subtitle">View the reservation queue for all books.</p>
 
-    <hr>
+<div class="reservation-dashboard">
 
-    {% if reservations %}
-        <div class="table-responsive">
-            <table>
+    <div class="reservation-page-header">
+        <div>
+            <h1>Manage Reservations</h1>
+            <p>View and manage the reservation queue for all books.</p>
+        </div>
+
+        <div class="reservation-total-count">
+            <span>Total Reservations</span>
+            <strong>{{ reservations|length }}</strong>
+        </div>
+    </div>
+
+    <div class="reservation-table-card">
+
+        <div class="reservation-card-header">
+            <div>
+                <h2>Reservation Records</h2>
+                <p>Track members, reserved books and reservation status.</p>
+            </div>
+        </div>
+
+        {% if reservations %}
+
+        <div class="reservation-table-wrapper">
+
+            <table class="reservation-table">
+
                 <thead>
                     <tr>
                         <th>Member</th>
@@ -23,30 +44,81 @@
                 </thead>
 
                 <tbody>
+
                     {% for reservation in reservations %}
-                        <tr>
-                            <td>{{ reservation.user.username }}</td>
 
-                            <td>{{ reservation.book.title }}</td>
+                    <tr>
+                        <td>
+                            <div class="reservation-member">
+                                <strong>{{ reservation.user.username }}</strong>
+                                <span>Member</span>
+                            </div>
+                        </td>
 
-                            <td>
-                                {{ reservation.reserved_at|date:"d M Y, h:i A" }}
-                            </td>
+                        <td>
+                            <span class="reservation-book-title">
+                                {{ reservation.book.title }}
+                            </span>
+                        </td>
 
-                            <td>{{ reservation.get_status_display }}</td>
-                        </tr>
+                        <td>
+                            {{ reservation.reserved_at|date:"d M Y, h:i A" }}
+                        </td>
+
+                        <td>
+                            {% if reservation.status == 'READY' %}
+                                <span class="reservation-status ready">
+                                    Ready
+                                </span>
+
+                            {% elif reservation.status == 'WAITING' %}
+                                <span class="reservation-status waiting">
+                                    Waiting
+                                </span>
+
+                            {% elif reservation.status == 'FULFILLED' %}
+                                <span class="reservation-status fulfilled">
+                                    Fulfilled
+                                </span>
+
+                            {% elif reservation.status == 'CANCELLED' %}
+                                <span class="reservation-status cancelled">
+                                    Cancelled
+                                </span>
+
+                            {% else %}
+                                <span class="reservation-status waiting">
+                                    {{ reservation.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
                     {% endfor %}
+
                 </tbody>
+
             </table>
+
         </div>
-    {% else %}
-        <p>No reservations have been made yet.</p>
-    {% endif %}
 
-    <hr>
+        {% else %}
 
-    <a href="{% url 'catalog:book_list' %}" class="button">
-        Back to Catalog
-    </a>
+        <div class="reservation-empty-state">
+            <h3>No Reservations Found</h3>
+            <p>There are currently no book reservations in the system.</p>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    <div class="reservation-back-link">
+        <a href="{% url 'catalog:book_list' %}" class="button">
+            Back to Catalog
+        </a>
+    </div>
+
 </div>
+
 {% endblock %}

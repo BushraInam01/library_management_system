@@ -1,3 +1,4 @@
+
 import logging
 
 from django.conf import settings
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 @admin.action(description='Send overdue reminder emails to selected members')
 def send_overdue_reminders(modeladmin, request, queryset):
     today = timezone.localdate()
+
     overdue = queryset.filter(
         returned_at__isnull=True,
         due_date__lt=today,
@@ -40,8 +42,12 @@ def send_overdue_reminders(modeladmin, request, queryset):
                 recipient_list=[record.user.email],
             )
             sent += 1
+
         except Exception:
-            logger.exception('Overdue reminder failed for record %s', record.pk)
+            logger.exception(
+                'Overdue reminder failed for record %s',
+                record.pk,
+            )
             failed += 1
 
     modeladmin.message_user(
@@ -77,11 +83,23 @@ class BorrowRecordAdmin(admin.ModelAdmin):
         'book__isbn',
     )
 
+    # All fields are read-only.
     readonly_fields = (
+        'user',
+        'book',
         'borrowed_at',
+        'due_date',
         'returned_at',
     )
 
     ordering = ('-borrowed_at',)
 
     actions = [send_overdue_reminders]
+
+    # Borrowing records must be created through the borrowing workflow.
+    def has_add_permission(self, request):
+        return False
+
+    # Preserve viewing, but prevent record deletion.
+    def has_delete_permission(self, request, obj=None):
+        return False

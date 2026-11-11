@@ -1,3 +1,4 @@
+
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -13,35 +14,172 @@ from .models import BorrowRecord
 User = get_user_model()
 
 
+class BorrowRecordAdminSecurityTests(TestCase):
+
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(
+            'boss',
+            'b@example.com',
+            'pass12345!',
+        )
+        self.client.force_login(self.admin_user)
+
+        self.member = User.objects.create_user(
+            'member',
+            email='member@example.com',
+            password='pass12345!',
+        )
+
+        self.book = Book.objects.create(
+            title='Admin Security Book',
+            author='Test Author',
+            isbn='9780306406157',
+            total_copies=2,
+            available_copies=2,
+        )
+
+        self.record = BorrowRecord.objects.create(
+            user=self.member,
+            book=self.book,
+        )
+
+    def test_admin_cannot_add_borrow_record(self):
+        url = reverse('admin:borrowing_borrowrecord_add')
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_cannot_edit_borrow_record(self):
+        url = reverse(
+            'admin:borrowing_borrowrecord_change',
+            args=[self.record.pk],
+        )
+
+        original_due_date = self.record.due_date
+
+        response = self.client.post(
+            url,
+            {
+                'due_date': '2027-01-01',
+                '_save': 'Save',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.record.refresh_from_db()
+
+        self.assertEqual(
+            self.record.due_date,
+            original_due_date,
+        )
+
+    def test_admin_cannot_delete_borrow_record(self):
+        url = reverse(
+            'admin:borrowing_borrowrecord_delete',
+            args=[self.record.pk],
+        )
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 403)
+
+        self.assertTrue(
+            BorrowRecord.objects.filter(
+                pk=self.record.pk
+            ).exists()
+        )
+
+    def test_borrow_record_remains_visible_in_admin(self):
+        url = reverse(
+            'admin:borrowing_borrowrecord_changelist'
+        )
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Admin Security Book')
+
+
 class OverdueReminderActionTests(TestCase):
 
     def setUp(self):
-        self.admin_user = User.objects.create_superuser('boss', 'b@example.com', 'pass12345!')
-        self.client.force_login(self.admin_user)
-        self.book = Book.objects.create(
-            title='Late Book', author='A', isbn='9780306406157',
-            total_copies=2, available_copies=2,
+        self.admin_user = User.objects.create_superuser(
+            'boss',
+            'b@example.com',
+            'pass12345!',
         )
-        self.url = reverse('admin:borrowing_borrowrecord_changelist')
+        self.client.force_login(self.admin_user)
+
+        self.book = Book.objects.create(
+            title='Late Book',
+            author='A',
+            isbn='9780306406158',
+            total_copies=2,
+            available_copies=2,
+        )
+
+        self.url = reverse(
+            'admin:borrowing_borrowrecord_changelist'
+        )
 
     def _record(self, username, email, days_until_due):
-        user = User.objects.create_user(username, email=email, password='pass12345!')
+        user = User.objects.create_user(
+            username,
+            email=email,
+            password='pass12345!',
+        )
+
         return BorrowRecord.objects.create(
-            user=user, book=self.book,
-            due_date=timezone.localdate() + timedelta(days=days_until_due),
+            user=user,
+            book=self.book,
+            due_date=(
+                timezone.localdate()
+                + timedelta(days=days_until_due)
+            ),
         )
 
     def test_only_overdue_unreturned_loans_with_email_are_reminded(self):
-        overdue = self._record('late', 'late@example.com', -3)
-        on_time = self._record('ontime', 'ontime@example.com', 5)
-        no_email = self._record('noemail', '', -2)
+        overdue = self._record(
+            'late',
+            'late@example.com',
+            -3,
+        )
+        on_time = self._record(
+            'ontime',
+            'ontime@example.com',
+            5,
+        )
+        no_email = self._record(
+            'noemail',
+            '',
+            -2,
+        )
+
         mail.outbox.clear()
 
-        self.client.post(self.url, {
-            'action': 'send_overdue_reminders',
-            '_selected_action': [overdue.pk, on_time.pk, no_email.pk],
-        })
+        response = self.client.post(
+            self.url,
+            {
+                'action': 'send_overdue_reminders',
+                '_selected_action': [
+                    overdue.pk,
+                    on_time.pk,
+                    no_email.pk,
+                ],
+            },
+        )
 
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, ['late@example.com'])
-        self.assertIn('3 day(s) overdue', mail.outbox[0].body)
+
+        self.assertEqual(
+            mail.outbox[0].to,
+            ['late@example.com'],
+        )
+
+        self.assertIn(
+            '3 day(s) overdue',
+            mail.outbox[0].body,
+        )

@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 
 {% block content %}
@@ -14,9 +15,7 @@
 
             <div class="book-card">
 
-                <h2>
-                    {{ record.book.title }}
-                </h2>
+                <h2>{{ record.book.title }}</h2>
 
                 <p>
                     <strong>Author:</strong>
@@ -42,9 +41,7 @@
 
                     <p>
                         <strong>Status:</strong>
-                        <span class="status-returned">
-                            Returned
-                        </span>
+                        <span class="status-returned">Returned</span>
                     </p>
 
                     <p>
@@ -56,9 +53,19 @@
 
                     <p>
                         <strong>Status:</strong>
-                        <span class="status-overdue">
-                            Overdue
-                        </span>
+                        <span class="status-overdue">Overdue</span>
+                    </p>
+
+                    <p>
+                        <strong>Estimated Fine So Far:</strong>
+                        Rs. {{ record.estimated_fine|floatformat:2 }}
+                    </p>
+
+                    <p>
+                        <small>
+                            This is an estimated fine. The final amount
+                            will be calculated when the book is returned.
+                        </small>
                     </p>
 
                 {% else %}

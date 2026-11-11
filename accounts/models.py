@@ -1,3 +1,4 @@
+
 from uuid import uuid4
 
 from django.conf import settings
@@ -16,6 +17,19 @@ class User(AbstractUser):
         choices=Role.choices,
         default=Role.MEMBER,
     )
+
+    def save(self, *args, **kwargs):
+        # Superusers should always have the LIBRARIAN role.
+        if self.is_superuser:
+            self.role = self.Role.LIBRARIAN
+
+            # Include role when save() uses update_fields.
+            if kwargs.get('update_fields') is not None:
+                kwargs['update_fields'] = (
+                    set(kwargs['update_fields']) | {'role'}
+                )
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.username

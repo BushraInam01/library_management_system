@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 
 {% block title %}Manage Borrowed Books{% endblock %}
@@ -47,6 +48,18 @@
 
                 <p class="status-overdue">
                     Status: Overdue
+                </p>
+
+                <p>
+                    <strong>Estimated Fine So Far:</strong>
+                    Rs. {{ record.estimated_fine|floatformat:2 }}
+                </p>
+
+                <p>
+                    <small>
+                        This is an estimated fine. The final amount
+                        will be calculated when the book is returned.
+                    </small>
                 </p>
 
             {% else %}

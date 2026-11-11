@@ -1,9 +1,14 @@
+
 from decimal import Decimal
 
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
+
+
+def get_default_fine_rate():
+    return settings.FINE_RATE_PER_DAY
 
 
 class Fine(models.Model):
@@ -19,7 +24,7 @@ class Fine(models.Model):
     rate_per_day = models.DecimalField(
         max_digits=8,
         decimal_places=2,
-        default=Decimal('50.00'),
+        default=get_default_fine_rate,
         validators=[MinValueValidator(Decimal('0.01'))],
     )
 

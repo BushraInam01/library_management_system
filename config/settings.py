@@ -4,6 +4,7 @@ Django settings for config project.
 """
 
 from pathlib import Path
+from decimal import Decimal
 import os
 
 from dotenv import load_dotenv
@@ -160,6 +161,13 @@ TIME_ZONE = 'Asia/Karachi'
 USE_I18N = True
 
 USE_TZ = True
+
+# --------------------------------------------------
+# LIBRARY FINE CONFIGURATION
+# --------------------------------------------------
+
+
+FINE_RATE_PER_DAY = Decimal('50.00')
 
 
 # --------------------------------------------------

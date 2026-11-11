@@ -1,4 +1,6 @@
+
 from datetime import timedelta
+from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
@@ -17,7 +19,7 @@ class BorrowRecord(models.Model):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='borrow_records',
     )
 
@@ -67,6 +69,25 @@ class BorrowRecord(models.Model):
             not self.is_returned
             and self.due_date < timezone.localdate()
         )
+
+    @property
+    def estimated_fine(self):
+        """
+        Calculate the current estimated fine for an active
+        overdue borrowing record.
+        """
+        if not self.is_overdue:
+            return None
+
+        overdue_days = (
+            timezone.localdate() - self.due_date
+        ).days
+
+        daily_rate = Decimal(
+            str(settings.FINE_RATE_PER_DAY)
+        )
+
+        return Decimal(overdue_days) * daily_rate
 
     def __str__(self):
         return f'{self.user.username} - {self.book.title}'

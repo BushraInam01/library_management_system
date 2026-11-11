@@ -14,7 +14,7 @@ class Reservation(models.Model):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='reservations',
     )
 
@@ -32,6 +32,12 @@ class Reservation(models.Model):
 
     reserved_at = models.DateTimeField(
         auto_now_add=True,
+    )
+
+    ready_until = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Deadline for collecting a READY reservation.',
     )
 
     updated_at = models.DateTimeField(
@@ -70,4 +76,3 @@ class Reservation(models.Model):
             f'{self.user.username} - '
             f'{self.book.title} ({self.status})'
         )
-

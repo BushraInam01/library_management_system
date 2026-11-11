@@ -1,11 +1,10 @@
+
 from decimal import Decimal
 
+from django.conf import settings
 from django.utils import timezone
 
 from .models import Fine
-
-
-FINE_RATE_PER_DAY = Decimal('50.00')
 
 
 def create_fine_for_return(borrow_record, returned_at=None):
@@ -23,15 +22,15 @@ def create_fine_for_return(borrow_record, returned_at=None):
     if overdue_days <= 0:
         return None
 
-    total_amount = (
-        Decimal(overdue_days) * FINE_RATE_PER_DAY
-    )
+    fine_rate = Decimal(str(settings.FINE_RATE_PER_DAY))
+
+    total_amount = Decimal(overdue_days) * fine_rate
 
     fine, created = Fine.objects.get_or_create(
         borrow_record=borrow_record,
         defaults={
             'overdue_days': overdue_days,
-            'rate_per_day': FINE_RATE_PER_DAY,
+            'rate_per_day': fine_rate,
             'total_amount': total_amount,
         }
     )

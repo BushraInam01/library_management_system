@@ -1,8 +1,12 @@
 
+from datetime import timedelta
+
 from django.db import IntegrityError, transaction
 from django.db.models import F
+from django.utils import timezone
 
 from catalog.models import Book
+from borrowing.models import BorrowRecord
 
 from .models import Reservation
 
@@ -15,6 +19,17 @@ def create_reservation(user, book):
             book = Book.objects.select_for_update().get(
                 pk=book.pk
             )
+
+            already_borrowed = BorrowRecord.objects.filter(
+                user=user,
+                book=book,
+                returned_at__isnull=True,
+            ).exists()
+
+            if already_borrowed:
+                raise ValueError(
+                    'You already have this book borrowed.'
+                )
 
             if book.available_copies > 0:
                 raise ValueError(
@@ -73,8 +88,18 @@ def prepare_next_reservation(book):
             return None
 
         next_reservation.status = Reservation.Status.READY
+
+        # Member has 3 days to collect the reserved book.
+        next_reservation.ready_until = (
+            timezone.now() + timedelta(days=3)
+        )
+
         next_reservation.save(
-            update_fields=['status', 'updated_at']
+            update_fields=[
+                'status',
+                'ready_until',
+                'updated_at',
+            ]
         )
 
         Book.objects.filter(

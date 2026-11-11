@@ -1,18 +1,39 @@
 
 {% extends 'base.html' %}
 
-{% block title %}My Reservations{% endblock %}
+{% block title %}My Reservations | Library Management{% endblock %}
 
 {% block content %}
-<div class="auth-card">
-    <h1>My Reservations</h1>
-    <p class="subtitle">View and manage your book reservations.</p>
 
-    <hr>
+<div class="reservation-dashboard">
 
-    {% if reservations %}
-        <div class="table-responsive">
-            <table>
+    <div class="reservation-page-header">
+        <div>
+            <h1>My Reservations</h1>
+            <p>View and manage your book reservations.</p>
+        </div>
+
+        <div class="reservation-total-count">
+            <span>Total Reservations</span>
+            <strong>{{ reservations|length }}</strong>
+        </div>
+    </div>
+
+    <div class="reservation-table-card">
+
+        <div class="reservation-card-header">
+            <div>
+                <h2>My Reservation Records</h2>
+                <p>Track your reserved books and their current status.</p>
+            </div>
+        </div>
+
+        {% if reservations %}
+
+        <div class="reservation-table-wrapper">
+
+            <table class="reservation-table">
+
                 <thead>
                     <tr>
                         <th>Book</th>
@@ -23,46 +44,94 @@
                 </thead>
 
                 <tbody>
+
                     {% for reservation in reservations %}
-                        <tr>
-                            <td>
+
+                    <tr>
+                        <td>
+                            <span class="reservation-book-title">
                                 <a href="{% url 'catalog:book_detail' reservation.book.pk %}">
                                     {{ reservation.book.title }}
                                 </a>
-                            </td>
+                            </span>
+                        </td>
 
-                            <td>{{ reservation.reserved_at|date:"d M Y, h:i A" }}</td>
+                        <td>
+                            {{ reservation.reserved_at|date:"d M Y, h:i A" }}
+                        </td>
 
-                            <td>
-                                {{ reservation.get_status_display }}
-                            </td>
+                        <td>
+                            {% if reservation.status == 'READY' %}
+                                <span class="reservation-status ready">
+                                    Ready
+                                </span>
 
-                            <td>
-                                {% if reservation.status == 'WAITING' or reservation.status == 'READY' %}
-                                    <form method="POST"
-                                          action="{% url 'reservations:cancel' reservation.pk %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="button">
-                                            Cancel Reservation
-                                        </button>
-                                    </form>
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                        </tr>
+                            {% elif reservation.status == 'WAITING' %}
+                                <span class="reservation-status waiting">
+                                    Waiting
+                                </span>
+
+                            {% elif reservation.status == 'FULFILLED' %}
+                                <span class="reservation-status fulfilled">
+                                    Fulfilled
+                                </span>
+
+                            {% elif reservation.status == 'CANCELLED' %}
+                                <span class="reservation-status cancelled">
+                                    Cancelled
+                                </span>
+
+                            {% else %}
+                                <span class="reservation-status waiting">
+                                    {{ reservation.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if reservation.status == 'WAITING' or reservation.status == 'READY' %}
+
+                                <form method="POST"
+                                      action="{% url 'reservations:cancel' reservation.pk %}">
+                                    {% csrf_token %}
+
+                                    <button type="submit"
+                                            class="reservation-cancel-btn">
+                                        Cancel Reservation
+                                    </button>
+                                </form>
+
+                            {% else %}
+                                <span class="reservation-action-complete">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
                     {% endfor %}
+
                 </tbody>
+
             </table>
+
         </div>
-    {% else %}
-        <p>You have not made any reservations yet.</p>
-    {% endif %}
 
-    <hr>
+        {% else %}
 
-    <a href="{% url 'catalog:book_list' %}" class="button">
-        Browse Books
-    </a>
+        <div class="reservation-empty-state">
+            <h3>No Reservations Found</h3>
+            <p>You have not made any book reservations yet.</p>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    <div class="reservation-back-link">
+        <a href="{% url 'catalog:book_list' %}" class="button">
+            Browse Books
+        </a>
+    </div>
+
 </div>
+
 {% endblock %}
