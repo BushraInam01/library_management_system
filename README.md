@@ -1,3 +1,4 @@
+
 # 📚 Library Catalog & Borrowing System
 
 A web-based Library Management System built with **Python and Django**. This application helps libraries manage their book catalog, members, borrowing and returning, reservations, overdue fines, and payments through a role-based system.
@@ -7,59 +8,86 @@ A web-based Library Management System built with **Python and Django**. This app
 ### 🔐 Accounts & Authentication
 - Member registration and login
 - Role-based access for Members and Librarians
-- Automatic library card generation
 - Separate dashboards for different user roles
+- Automatic library card generation
+- Superuser and librarian access management
 - Protected views and authentication controls
 
 ### 📖 Book Catalog
 - Browse and search books by title, author, or ISBN
 - View detailed book information and availability
-- Add new books through librarian access
+- Add and manage books through librarian access
 - ISBN lookup using the Open Library API
 - API response caching and error handling
+- ISBN format validation
+- Automatic book stock management
 
 ### 🔄 Borrowing & Returns
 - Borrow available books
-- Automatic due-date assignment
+- Automatic due-date assignment (14 days)
 - View personal borrowing history
 - Librarian-managed book returns
 - Automatic book availability updates
+- Safe borrowing operations using database transactions
+- Stock consistency checks to prevent incorrect copy counts
 
 ### 📌 Reservations
 - Reserve books when all copies are borrowed
 - FIFO (First In, First Out) reservation queue
 - Automatically allocate returned copies to the next waiting member
+- Three-day reservation holding period for READY reservations
+- Expired reservation processing through a Django management command
+- Automatic allocation to the next waiting member after cancellation or expiry
 - Cancel eligible reservations
 - Separate member and librarian reservation views
+- Prevent duplicate and unnecessary reservations
+
+Run the reservation expiry command manually:
+
+```bash
+python3 manage.py expire_reservations
+```
 
 ### 💰 Fines & Payments
 - Automatic overdue fine calculation
+- Configurable daily fine rate
+- Estimated fine display for overdue books
 - Record full and partial payments
 - Track unpaid, partially paid, and paid fines
 - Validate payments against outstanding balances
+- Preserve fine payment records
+
+The daily fine rate can be configured using `FINE_RATE_PER_DAY` in Django settings.
 
 ### ⚙️ Administration
 - Django Admin integration
 - CSV import support with `django-import-export`
 - Administrative management of library records
 - Custom admin actions:
-  - Send overdue reminder emails (Borrow records)
-  - Mark selected fines as fully paid (Fines)
-  - Activate / deactivate library cards (Library cards)
-- Members created in the admin automatically receive a library card
-- Due-date email sent automatically when a book is borrowed (Django signal)
+  - Send overdue reminder emails
+  - Mark selected fines as fully paid
+  - Activate or deactivate library cards
+- Automatic library card creation for members registered through admin
+- Due-date email notification when a book is borrowed
+- Protected borrowing records to prevent direct admin modifications that bypass stock management
+- Safe reservation cancellation through admin actions
+- Book stock validation during admin updates and CSV imports
 
-#### CSV import format
+#### CSV Import Format
 
-In Django Admin > Books > Import, upload a CSV with these columns:
+In Django Admin → Books → Import, upload a CSV with these columns:
 
-```
+```csv
 isbn,title,author,publisher,publication_year,description,total_copies
 ```
 
-Books are matched by ISBN: existing books are updated, new ones are created.
-`available_copies` is managed automatically. Leave out a column (for example
-`description`) if you do not want to change it, because blank cells overwrite existing values.
+Books are matched by ISBN:
+- Existing books are updated.
+- New books are created.
+- Available copies are managed automatically.
+- Stock adjustments respect active borrowing records and READY reservations.
+
+Leave out a column if you do not want to update it. Blank cells may overwrite existing values.
 
 ## 🛠️ Technology Stack
 
@@ -85,9 +113,9 @@ library_management_system/
 ├── catalog/        # Book catalog and ISBN lookup
 ├── config/         # Django project configuration
 ├── fines/          # Fine calculation and payments
-├── reservations/   # Book reservation queue
-├── static/         # CSS and static assets
-├── templates/      # HTML templates
+├── reservations/   # Reservation queue and expiry management
+├── static/          # CSS and static assets
+├── templates/       # HTML templates
 │
 ├── manage.py
 ├── requirements.txt
@@ -152,9 +180,8 @@ python3 manage.py runserver
 
 Open the application in your browser:
 
-**Application:** http://127.0.0.1:8000/
-
-**Django Admin:** http://127.0.0.1:8000/admin/
+- **Application:** http://127.0.0.1:8000/
+- **Django Admin:** http://127.0.0.1:8000/admin/
 
 ## 🧪 Running Tests
 
@@ -176,13 +203,21 @@ Check for uncreated model migrations:
 python3 manage.py makemigrations --check --dry-run
 ```
 
+Process expired reservations:
+
+```bash
+python3 manage.py expire_reservations
+```
+
 ## 🔒 Security Considerations
 
 - Environment variables are used for sensitive configuration.
 - Actual `.env` files and local database files are excluded from Git.
 - Authentication and role-based authorization protect restricted operations.
 - Database transactions and integrity constraints help maintain data consistency.
-- Production deployment requires appropriate HTTPS, secure cookie, SMTP, `DEBUG`, and `ALLOWED_HOSTS` configuration.
+- Protected member records preserve borrowing and reservation history.
+- Admin actions use application services to maintain stock and reservation consistency.
+- Production deployment requires appropriate HTTPS, secure cookies, SMTP, `DEBUG`, and `ALLOWED_HOSTS` configuration.
 
 ## 🎯 Learning Objectives
 
@@ -199,12 +234,14 @@ This project demonstrates practical implementation of:
 - Django signals and email configuration
 - Custom Django Admin actions
 - CSV import workflows
+- Reservation queue management and expiry handling
 - Automated testing
 
 ## 🔮 Future Improvements
 
 - Production deployment
 - Real SMTP integration for due-date notifications
+- Automatic scheduling of reservation expiry processing
 - Automated overdue and upcoming due-date reminders
 - Advanced library reports and analytics
 
