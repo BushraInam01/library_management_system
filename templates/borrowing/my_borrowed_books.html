@@ -1,106 +1,138 @@
 
 {% extends 'base.html' %}
 
+{% block title %}My Borrowed Books{% endblock %}
+
 {% block content %}
 
-<h1>My Borrowed Books</h1>
+<div class="borrowing-dashboard">
 
-<p>Here you can view your borrowing history and due dates.</p>
+    <div class="borrowing-page-header">
+        <div>
+            <h1>My Borrowed Books</h1>
+            <p>View your borrowing history, due dates and book status.</p>
+        </div>
 
-{% if borrow_records %}
-
-    <div class="book-list">
-
-        {% for record in borrow_records %}
-
-            <div class="book-card">
-
-                <h2>{{ record.book.title }}</h2>
-
-                <p>
-                    <strong>Author:</strong>
-                    {{ record.book.author }}
-                </p>
-
-                <p>
-                    <strong>ISBN:</strong>
-                    {{ record.book.isbn }}
-                </p>
-
-                <p>
-                    <strong>Borrowed On:</strong>
-                    {{ record.borrowed_at|date:"d M Y" }}
-                </p>
-
-                <p>
-                    <strong>Due Date:</strong>
-                    {{ record.due_date|date:"d M Y" }}
-                </p>
-
-                {% if record.returned_at %}
-
-                    <p>
-                        <strong>Status:</strong>
-                        <span class="status-returned">Returned</span>
-                    </p>
-
-                    <p>
-                        <strong>Returned On:</strong>
-                        {{ record.returned_at|date:"d M Y" }}
-                    </p>
-
-                {% elif record.is_overdue %}
-
-                    <p>
-                        <strong>Status:</strong>
-                        <span class="status-overdue">Overdue</span>
-                    </p>
-
-                    <p>
-                        <strong>Estimated Fine So Far:</strong>
-                        Rs. {{ record.estimated_fine|floatformat:2 }}
-                    </p>
-
-                    <p>
-                        <small>
-                            This is an estimated fine. The final amount
-                            will be calculated when the book is returned.
-                        </small>
-                    </p>
-
-                {% else %}
-
-                    <p>
-                        <strong>Status:</strong>
-                        <span class="status-borrowed">
-                            Currently Borrowed
-                        </span>
-                    </p>
-
-                {% endif %}
-
-                <p>
-                    <a href="{% url 'catalog:book_detail' record.book.pk %}">
-                        View Book Details
-                    </a>
-                </p>
-
-            </div>
-
-            <hr>
-
-        {% endfor %}
-
+        <div class="borrowing-total-count">
+            <span>Total Records</span>
+            <strong>{{ borrow_records|length }}</strong>
+        </div>
     </div>
 
-{% else %}
+    {% if borrow_records %}
 
-    <p>You have not borrowed any books yet.</p>
+        <div class="borrowing-book-list">
 
-{% endif %}
+            {% for record in borrow_records %}
 
-<a href="{% url 'catalog:book_list' %}" class="button">
-    Back to Book Catalog
-</a>
+                <article class="borrowing-book-card">
+
+                    <div class="borrowing-book-header">
+                        <div>
+                            <h2>{{ record.book.title }}</h2>
+                            <p class="borrowing-book-author">
+                                by {{ record.book.author }}
+                            </p>
+                        </div>
+
+                        {% if record.returned_at %}
+                            <span class="borrowing-status returned">
+                                Returned
+                            </span>
+                        {% elif record.is_overdue %}
+                            <span class="borrowing-status overdue">
+                                Overdue
+                            </span>
+                        {% else %}
+                            <span class="borrowing-status borrowed">
+                                Currently Borrowed
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="borrowing-book-details">
+
+                        <div class="borrowing-detail-item">
+                            <span>ISBN</span>
+                            <strong>{{ record.book.isbn }}</strong>
+                        </div>
+
+                        <div class="borrowing-detail-item">
+                            <span>Borrowed On</span>
+                            <strong>{{ record.borrowed_at|date:"d M Y" }}</strong>
+                        </div>
+
+                        <div class="borrowing-detail-item">
+                            <span>Due Date</span>
+                            <strong>{{ record.due_date|date:"d M Y" }}</strong>
+                        </div>
+
+                        {% if record.returned_at %}
+                            <div class="borrowing-detail-item">
+                                <span>Returned On</span>
+                                <strong>
+                                    {{ record.returned_at|date:"d M Y" }}
+                                </strong>
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                    {% if record.is_overdue and not record.returned_at %}
+
+                        <div class="borrowing-fine-notice">
+                            <div>
+                                <span>Estimated Fine So Far</span>
+                                <strong>
+                                    Rs. {{ record.estimated_fine|floatformat:2 }}
+                                </strong>
+                            </div>
+
+                            <p>
+                                This is an estimated fine. The final amount
+                                will be calculated when the book is returned.
+                            </p>
+                        </div>
+
+                    {% endif %}
+
+                    <div class="borrowing-card-footer">
+                        <a
+                            href="{% url 'catalog:book_detail' record.book.pk %}"
+                            class="borrowing-details-btn"
+                        >
+                            View Book Details
+                        </a>
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="borrowing-empty-state">
+            <h3>No Borrowing Records</h3>
+            <p>You have not borrowed any books yet.</p>
+
+            <a
+                href="{% url 'catalog:book_list' %}"
+                class="borrowing-primary-btn"
+            >
+                Browse Book Catalog
+            </a>
+        </div>
+
+    {% endif %}
+
+    <div class="borrowing-back-link">
+        <a href="{% url 'catalog:book_list' %}">
+            Back to Book Catalog
+        </a>
+    </div>
+
+</div>
 
 {% endblock %}

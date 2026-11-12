@@ -11,6 +11,7 @@ from reservations.models import Reservation
 from .models import Book
 from .resources import BookResource
 from .services import adjust_book_copies
+from .forms import normalize_and_validate_isbn
 
 
 class BookAdminForm(forms.ModelForm):
@@ -18,6 +19,10 @@ class BookAdminForm(forms.ModelForm):
     class Meta:
         model = Book
         fields = "__all__"
+
+    def clean_isbn(self):
+        isbn = self.cleaned_data["isbn"]
+        return normalize_and_validate_isbn(isbn)
 
     def clean_total_copies(self):
         new_total = self.cleaned_data["total_copies"]

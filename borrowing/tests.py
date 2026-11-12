@@ -1,4 +1,8 @@
 
+from datetime import timedelta
+from decimal import Decimal
+
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -252,24 +256,31 @@ class ReservationBorrowingIntegrationTests(TestCase):
         self.assertEqual(self.book.available_copies, 1)
 
 
-
 class DueDateEmailSignalTests(TestCase):
 
     def setUp(self):
         self.member = User.objects.create_user(
-            username='emailer', password='pass12345!',
+            username='emailer',
+            password='pass12345!',
             email='emailer@example.com',
         )
+
         self.book = Book.objects.create(
-            title='Signal Book', author='A', isbn='9780306406157',
-            total_copies=1, available_copies=1,
+            title='Signal Book',
+            author='A',
+            isbn='9780306406157',
+            total_copies=1,
+            available_copies=1,
         )
 
     def test_email_sent_when_borrow_record_created(self):
         from django.core import mail
 
         with self.captureOnCommitCallbacks(execute=True):
-            record = BorrowRecord.objects.create(user=self.member, book=self.book)
+            record = BorrowRecord.objects.create(
+                user=self.member,
+                book=self.book,
+            )
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['emailer@example.com'])
@@ -279,7 +290,11 @@ class DueDateEmailSignalTests(TestCase):
         from django.core import mail
 
         with self.captureOnCommitCallbacks(execute=True):
-            record = BorrowRecord.objects.create(user=self.member, book=self.book)
+            record = BorrowRecord.objects.create(
+                user=self.member,
+                book=self.book,
+            )
+
         with self.captureOnCommitCallbacks(execute=True):
             record.returned_at = timezone.now()
             record.save()
@@ -291,7 +306,70 @@ class DueDateEmailSignalTests(TestCase):
 
         self.member.email = ''
         self.member.save()
+
         with self.captureOnCommitCallbacks(execute=True):
-            BorrowRecord.objects.create(user=self.member, book=self.book)
+            BorrowRecord.objects.create(
+                user=self.member,
+                book=self.book,
+            )
 
         self.assertEqual(len(mail.outbox), 0)
+
+
+class EstimatedFineTests(TestCase):
+
+    def setUp(self):
+        self.member = User.objects.create_user(
+            username='fine_member',
+            password='pass12345!',
+        )
+
+        self.book = Book.objects.create(
+            title='Fine Test Book',
+            author='Test Author',
+            isbn='9780306406157',
+            total_copies=1,
+            available_copies=0,
+        )
+
+    def test_overdue_record_calculates_estimated_fine(self):
+        three_days_ago = timezone.localdate() - timedelta(days=3)
+
+        record = BorrowRecord.objects.create(
+            user=self.member,
+            book=self.book,
+            due_date=three_days_ago,
+        )
+
+        expected_fine = (
+            Decimal('3')
+            * Decimal(str(settings.FINE_RATE_PER_DAY))
+        )
+
+        self.assertTrue(record.is_overdue)
+        self.assertEqual(record.estimated_fine, expected_fine)
+
+    def test_not_overdue_record_has_no_estimated_fine(self):
+        future_due_date = timezone.localdate() + timedelta(days=3)
+
+        record = BorrowRecord.objects.create(
+            user=self.member,
+            book=self.book,
+            due_date=future_due_date,
+        )
+
+        self.assertFalse(record.is_overdue)
+        self.assertIsNone(record.estimated_fine)
+
+    def test_returned_record_has_no_estimated_fine(self):
+        three_days_ago = timezone.localdate() - timedelta(days=3)
+
+        record = BorrowRecord.objects.create(
+            user=self.member,
+            book=self.book,
+            due_date=three_days_ago,
+            returned_at=timezone.now(),
+        )
+
+        self.assertFalse(record.is_overdue)
+        self.assertIsNone(record.estimated_fine)

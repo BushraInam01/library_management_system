@@ -48,6 +48,36 @@ Run the reservation expiry command manually:
 python3 manage.py expire_reservations
 ```
 
+#### Automatic Reservation Expiry Scheduling
+
+The expiry command can be scheduled to run automatically every hour using Linux cron.
+
+Open the cron scheduler:
+
+```bash
+crontab -e
+```
+
+Add the following entry:
+
+```cron
+0 * * * * cd "$HOME/AgenticAi-Projects/Django/library_management_system" && "$HOME/AgenticAi-Projects/Django/library_management_system/venv/bin/python" manage.py expire_reservations >> "$HOME/library-expiry.log" 2>&1
+```
+
+This configuration:
+- Runs the expiry command once every hour.
+- Uses the project's virtual environment.
+- Writes command output to `library-expiry.log` in the user's home directory.
+- Processes expired READY reservations and allocates available copies to the next waiting members.
+
+On WSL, make sure the cron service is running:
+
+```bash
+sudo service cron start
+```
+
+If WSL is restarted, the cron service may need to be started again unless automatic service startup has been configured.
+
 ### 💰 Fines & Payments
 - Automatic overdue fine calculation
 - Configurable daily fine rate
@@ -89,6 +119,20 @@ Books are matched by ISBN:
 
 Leave out a column if you do not want to update it. Blank cells may overwrite existing values.
 
+### 👥 Member Account Management
+
+Member accounts with borrowing or reservation history are protected from deletion to preserve historical library records.
+
+Instead of deleting these accounts, librarians should deactivate members through Django Admin:
+
+1. Open Django Admin.
+2. Navigate to Users.
+3. Select the member account.
+4. Set `is_active` to `False`.
+5. Save the changes.
+
+Deactivated members retain their borrowing and reservation history but cannot log in.
+
 ## 🛠️ Technology Stack
 
 | Technology | Purpose |
@@ -114,8 +158,8 @@ library_management_system/
 ├── config/         # Django project configuration
 ├── fines/          # Fine calculation and payments
 ├── reservations/   # Reservation queue and expiry management
-├── static/          # CSS and static assets
-├── templates/       # HTML templates
+├── static/         # CSS and static assets
+├── templates/      # HTML templates
 │
 ├── manage.py
 ├── requirements.txt
@@ -216,6 +260,7 @@ python3 manage.py expire_reservations
 - Authentication and role-based authorization protect restricted operations.
 - Database transactions and integrity constraints help maintain data consistency.
 - Protected member records preserve borrowing and reservation history.
+- Members with historical records should be deactivated instead of deleted.
 - Admin actions use application services to maintain stock and reservation consistency.
 - Production deployment requires appropriate HTTPS, secure cookies, SMTP, `DEBUG`, and `ALLOWED_HOSTS` configuration.
 
@@ -241,7 +286,6 @@ This project demonstrates practical implementation of:
 
 - Production deployment
 - Real SMTP integration for due-date notifications
-- Automatic scheduling of reservation expiry processing
 - Automated overdue and upcoming due-date reminders
 - Advanced library reports and analytics
 

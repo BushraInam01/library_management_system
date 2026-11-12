@@ -5,96 +5,128 @@
 
 {% block content %}
 
-<h1>Manage Borrowed Books</h1>
+<div class="borrowing-dashboard">
 
-<p>
-    View active borrowing records and process book returns.
-</p>
+    <div class="borrowing-page-header">
+        <div>
+            <h1>Manage Borrowed Books</h1>
+            <p>View active borrowing records and process book returns.</p>
+        </div>
 
-{% if borrow_records %}
+        <div class="borrowing-total-count">
+            <span>Active Borrowings</span>
+            <strong>{{ borrow_records|length }}</strong>
+        </div>
+    </div>
 
-    {% for record in borrow_records %}
+    {% if borrow_records %}
 
-        <div class="book-card">
+        <div class="borrowing-book-list">
 
-            <h2>{{ record.book.title }}</h2>
+            {% for record in borrow_records %}
 
-            <p>
-                <strong>Author:</strong>
-                {{ record.book.author }}
-            </p>
+                <article class="borrowing-book-card">
 
-            <p>
-                <strong>Borrowed By:</strong>
-                {{ record.user.username }}
-            </p>
+                    <div class="borrowing-book-header">
+                        <div>
+                            <h2>{{ record.book.title }}</h2>
+                            <p class="borrowing-book-author">
+                                by {{ record.book.author }}
+                            </p>
+                        </div>
 
-            <p>
-                <strong>ISBN:</strong>
-                {{ record.book.isbn }}
-            </p>
+                        {% if record.is_overdue %}
+                            <span class="borrowing-status overdue">
+                                Overdue
+                            </span>
+                        {% else %}
+                            <span class="borrowing-status borrowed">
+                                Currently Borrowed
+                            </span>
+                        {% endif %}
+                    </div>
 
-            <p>
-                <strong>Borrowed On:</strong>
-                {{ record.borrowed_at|date:"d M Y" }}
-            </p>
+                    <div class="borrowing-book-details">
 
-            <p>
-                <strong>Due Date:</strong>
-                {{ record.due_date|date:"d M Y" }}
-            </p>
+                        <div class="borrowing-detail-item">
+                            <span>Borrowed By</span>
+                            <strong>{{ record.user.username }}</strong>
+                        </div>
 
-            {% if record.is_overdue %}
+                        <div class="borrowing-detail-item">
+                            <span>ISBN</span>
+                            <strong>{{ record.book.isbn }}</strong>
+                        </div>
 
-                <p class="status-overdue">
-                    Status: Overdue
-                </p>
+                        <div class="borrowing-detail-item">
+                            <span>Borrowed On</span>
+                            <strong>{{ record.borrowed_at|date:"d M Y" }}</strong>
+                        </div>
 
-                <p>
-                    <strong>Estimated Fine So Far:</strong>
-                    Rs. {{ record.estimated_fine|floatformat:2 }}
-                </p>
+                        <div class="borrowing-detail-item">
+                            <span>Due Date</span>
+                            <strong>{{ record.due_date|date:"d M Y" }}</strong>
+                        </div>
 
-                <p>
-                    <small>
-                        This is an estimated fine. The final amount
-                        will be calculated when the book is returned.
-                    </small>
-                </p>
+                    </div>
 
-            {% else %}
+                    {% if record.is_overdue %}
 
-                <p class="status-borrowed">
-                    Status: Currently Borrowed
-                </p>
+                        <div class="borrowing-fine-notice">
+                            <div>
+                                <span>Estimated Fine So Far</span>
+                                <strong>
+                                    Rs. {{ record.estimated_fine|floatformat:2 }}
+                                </strong>
+                            </div>
 
-            {% endif %}
+                            <p>
+                                This is an estimated fine. The final amount
+                                will be calculated when the book is returned.
+                            </p>
+                        </div>
 
-            <form method="POST"
-                  action="{% url 'borrowing:return_book' record.pk %}">
+                    {% endif %}
 
-                {% csrf_token %}
+                    <div class="borrowing-card-footer">
 
-                <button type="submit" class="button">
-                    Mark as Returned
-                </button>
+                        <form
+                            method="POST"
+                            action="{% url 'borrowing:return_book' record.pk %}"
+                        >
+                            {% csrf_token %}
 
-            </form>
+                            <button
+                                type="submit"
+                                class="borrowing-return-btn"
+                            >
+                                Mark as Returned
+                            </button>
+                        </form>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
 
         </div>
 
-        <hr>
+    {% else %}
 
-    {% endfor %}
+        <div class="borrowing-empty-state">
+            <h3>No Active Borrowings</h3>
+            <p>There are currently no active borrowing records.</p>
+        </div>
 
-{% else %}
+    {% endif %}
 
-    <p>There are currently no active borrowing records.</p>
+    <div class="borrowing-back-link">
+        <a href="{% url 'accounts:librarian_dashboard' %}">
+            Back to Librarian Dashboard
+        </a>
+    </div>
 
-{% endif %}
-
-<a href="{% url 'accounts:librarian_dashboard' %}">
-    Back to Librarian Dashboard
-</a>
+</div>
 
 {% endblock %}
